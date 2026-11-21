@@ -289,11 +289,8 @@ begin
     raise exception 'Invalid game result.';
   end if;
 
-  if p_result in ('white_win', 'black_win')
-     and p_winner_id is distinct from case
-       when p_result = 'white_win' then v_game.white_player_id
-       else v_game.black_player_id
-     end then
+  if (p_result = 'white_win' and p_winner_id is distinct from v_game.white_player_id)
+     or (p_result = 'black_win' and p_winner_id is distinct from v_game.black_player_id) then
     raise exception 'The winner does not match the game result.';
   end if;
 
