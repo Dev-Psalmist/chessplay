@@ -128,43 +128,49 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Retrieve previous moves.
-    const { data: previousMoves, error: movesError } = await supabase
-      .from("game_moves")
-      .select("from_square, to_square, promotion")
-      .eq("game_id", gameId)
-      .order("ply", { ascending: true });
-
-    if (movesError) {
-      console.error("Move history query failed:", movesError);
-
-      return errorResponse(
-        "Could not load the game history.",
-        500
-      );
-    }
-
-    // Reconstruct the chess position.
+    // Rebuild from the stored PGN first. This avoids reading every move
+    // from game_moves on every turn, keeping the common move path to fewer
+    // database round trips. Older games without PGN use the move ledger.
     const chess = new Chess();
+    let ply = 0;
 
-    for (const previousMove of previousMoves ?? []) {
+    if (game.pgn) {
       try {
-        chess.move({
-          from: previousMove.from_square,
-          to: previousMove.to_square,
-          ...(previousMove.promotion
-            ? { promotion: previousMove.promotion }
-            : {}),
-        });
+        chess.loadPgn(game.pgn);
+        ply = chess.history().length;
       } catch {
-        return errorResponse(
-          "The saved game history is inconsistent.",
-          409
-        );
+        return errorResponse("The saved game history is inconsistent.", 409);
       }
+    } else {
+      const { data: previousMoves, error: movesError } = await supabase
+        .from("game_moves")
+        .select("from_square, to_square, promotion")
+        .eq("game_id", gameId)
+        .order("ply", { ascending: true });
+
+      if (movesError) {
+        console.error("Move history query failed:", movesError);
+        return errorResponse("Could not load the game history.", 500);
+      }
+
+      for (const previousMove of previousMoves ?? []) {
+        try {
+          chess.move({
+            from: previousMove.from_square,
+            to: previousMove.to_square,
+            ...(previousMove.promotion
+              ? { promotion: previousMove.promotion }
+              : {}),
+          });
+        } catch {
+          return errorResponse("The saved game history is inconsistent.", 409);
+        }
+      }
+
+      ply = previousMoves?.length ?? 0;
     }
 
-    // Check that the reconstructed position matches the database.
+    // Never trust PGN alone: verify it still represents the authoritative FEN.
     if (chess.fen() !== game.current_fen) {
       return errorResponse(
         "The board is out of sync. Refresh the game and try again.",
@@ -198,7 +204,7 @@ export async function POST(request: NextRequest) {
 
     const newFen = chess.fen();
     const newPgn = chess.pgn();
-    const ply = (previousMoves?.length ?? 0) + 1;
+    ply += 1;
 
     let result: string | null = null;
     let winnerId: string | null = null;

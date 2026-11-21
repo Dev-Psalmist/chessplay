@@ -454,7 +454,20 @@ function MultiplayerMatchContent() {
         throw new Error(result.error || "The move could not be saved.");
       }
 
-      void refreshGame();
+      // The server has confirmed the move. Use its authoritative position
+      // directly instead of triggering another full game and move-history read.
+      setGame((prev) =>
+        prev
+          ? {
+              ...prev,
+              current_fen: result.fen ?? prev.current_fen,
+              pgn: result.pgn ?? prev.pgn,
+              status: result.result ? "completed" : prev.status,
+              result: result.result ?? prev.result,
+              winner_id: result.winnerId ?? prev.winner_id,
+            }
+          : prev
+      );
     } catch (err) {
       setGame((prev) =>
         prev ? { ...prev, current_fen: previousFen } : prev
