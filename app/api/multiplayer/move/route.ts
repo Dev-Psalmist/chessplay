@@ -242,6 +242,33 @@ export async function POST(request: NextRequest) {
       return errorResponse(saveError.message, 409);
     }
 
+    // Best-effort clock bookkeeping. Silently skipped until migration 0003
+    // (the clock columns) has been applied to the database.
+    try {
+      const { data: clockRow } = await supabase
+        .from("games")
+        .select("white_player_id, white_time_ms, black_time_ms, last_move_at")
+        .eq("id", gameId)
+        .maybeSingle();
+
+      if (clockRow && typeof clockRow.white_time_ms === "number") {
+        const moverIsWhite = clockRow.white_player_id === user.id;
+        const column = moverIsWhite ? "white_time_ms" : "black_time_ms";
+        const startedAt = clockRow.last_move_at
+          ? new Date(clockRow.last_move_at).getTime()
+          : Date.now();
+        const elapsed = Math.max(0, Date.now() - startedAt);
+        const remaining = Math.max(0, (clockRow[column] ?? 0) - elapsed);
+
+        await supabase
+          .from("games")
+          .update({ [column]: remaining, last_move_at: new Date().toISOString() })
+          .eq("id", gameId);
+      }
+    } catch {
+      // clocks stay client-side until the migration is applied
+    }
+
     return NextResponse.json({
       success: true,
       move: playedMove.san,

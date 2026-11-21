@@ -5,6 +5,7 @@ import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Copy, Users, Swords, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { DEFAULT_TIME_CONTROL, TIME_CONTROLS } from "@/lib/clock";
 
 type GameRoom = {
   id: string;
@@ -87,6 +88,8 @@ export default function MultiplayerPage() {
     };
   }, [room?.id]);
 
+  const [timeControlId, setTimeControlId] = useState(DEFAULT_TIME_CONTROL);
+
   // Create a new multiplayer game.
   async function createGame() {
     if (!userId) {
@@ -111,6 +114,15 @@ export default function MultiplayerPage() {
         throw new Error(
           "The game was created, but its invitation details could not be loaded."
         );
+      }
+
+      try {
+        await supabase.rpc("set_game_clock", {
+          p_game_id: result.created_game_id,
+          p_time_control: timeControlId,
+        });
+      } catch {
+        // clocks light up once migration 0003 has been applied
       }
 
       setRoom({
@@ -251,6 +263,24 @@ export default function MultiplayerPage() {
               <p className="mt-3 min-h-12 text-sm leading-6 text-[color:var(--muted)]">
                 Start a new chess match and invite someone to play against you.
               </p>
+
+              <div className="mt-5 flex flex-wrap gap-2">
+                {TIME_CONTROLS.map((control) => (
+                  <button
+                    key={control.id}
+                    type="button"
+                    onClick={() => setTimeControlId(control.id)}
+                    className={[
+                      "rounded-lg border px-3 py-2 text-xs font-semibold transition",
+                      timeControlId === control.id
+                        ? "border-[color:var(--accent)] bg-[var(--accent-soft)] text-[color:var(--accent-2)]"
+                        : "border-[color:var(--line)] text-[color:var(--muted)] hover:bg-[var(--panel-2)]",
+                    ].join(" ")}
+                  >
+                    {control.label}
+                  </button>
+                ))}
+              </div>
 
               <button
                 onClick={createGame}

@@ -12,6 +12,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Chess } from "chess.js";
 import { Chessboard } from "react-chessboard";
 import { initSounds, playSound } from "@/lib/sound";
+import ChessClock from "@/components/ChessClock";
 import {
   boardFrameStyle,
   darkNotationStyle,
@@ -77,6 +78,8 @@ function MultiplayerMatchContent() {
 
   const [userId, setUserId] = useState("");
   const [game, setGame] = useState<Game | null>(null);
+  const [clock, setClock] = useState<{ white: number; black: number; daily: boolean } | null>(null);
+  const clockTickRef = useRef<number | null>(null);
   const seenFenRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -176,8 +179,10 @@ function MultiplayerMatchContent() {
 
   const refreshGame = useCallback(async () => {
     const {
-      data: { user },
-    } = await supabase.auth.getUser();
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    const user = session?.user;
 
     if (!user) {
       router.push("/login");
@@ -210,6 +215,20 @@ function MultiplayerMatchContent() {
     }
 
     setGame(gameData as Game);
+
+    const { data: clockData, error: clockError } = await supabase
+      .from("games")
+      .select("time_control, white_time_ms, black_time_ms")
+      .eq("id", gameId)
+      .maybeSingle();
+
+    if (!clockError && clockData && typeof clockData.white_time_ms === "number") {
+      setClock({
+        white: clockData.white_time_ms,
+        black: clockData.black_time_ms ?? clockData.white_time_ms,
+        daily: String(clockData.time_control ?? "").endsWith("d"),
+      });
+    }
 
     const { data: moveData, error: moveError } = await supabase
       .from("game_moves")
@@ -264,6 +283,29 @@ function MultiplayerMatchContent() {
     void refreshChat();
   }, [refreshGame, refreshRematch, refreshChat]);
 
+  useEffect(() => {
+    if (!clock || !game || game.status !== "active") {
+      clockTickRef.current = null;
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      const now = performance.now();
+      const last = clockTickRef.current ?? now;
+      clockTickRef.current = now;
+      const delta = now - last;
+      const turn = game.current_fen.split(" ")[1] === "w" ? "white" : "black";
+
+      setClock((prev) => {
+        if (!prev) return prev;
+        const next = Math.max(0, prev[turn] - delta);
+        return { ...prev, [turn]: next };
+      });
+    }, 500);
+
+    return () => window.clearInterval(interval);
+  }, [clock, game]);
+
   // Listen for game moves, game updates, rematch updates and chat messages.
   useEffect(() => {
     const channel = supabase
@@ -276,8 +318,14 @@ function MultiplayerMatchContent() {
           table: "games",
           filter: `id=eq.${gameId}`,
         },
-        () => {
-          void refreshGame();
+        (payload) => {
+          const row = payload.new as Partial<Game> | null;
+
+          if (row && typeof row.current_fen === "string") {
+            setGame((prev) => (prev ? { ...prev, ...row } : prev));
+          } else {
+            void refreshGame();
+          }
         }
       )
       .on(
@@ -288,8 +336,14 @@ function MultiplayerMatchContent() {
           table: "game_moves",
           filter: `game_id=eq.${gameId}`,
         },
-        () => {
-          void refreshGame();
+        (payload) => {
+          const row = payload.new as Move | null;
+
+          if (row?.id) {
+            setMoves((prev) =>
+              prev.some((move) => move.id === row.id) ? prev : [...prev, row]
+            );
+          }
         }
       )
       .on(
@@ -355,6 +409,22 @@ function MultiplayerMatchContent() {
     setBusy(true);
     setError("");
 
+    const previousFen = game.current_fen;
+
+    // Paint the move straight away so the board never waits on the network.
+    try {
+      const optimistic = new Chess(previousFen);
+      const applied = optimistic.move({ from, to, promotion });
+
+      if (applied) {
+        setGame((prev) =>
+          prev ? { ...prev, current_fen: optimistic.fen() } : prev
+        );
+      }
+    } catch {
+      // the server remains the source of truth; a bad move is rejected below
+    }
+
     try {
       const {
         data: { session },
@@ -384,13 +454,17 @@ function MultiplayerMatchContent() {
         throw new Error(result.error || "The move could not be saved.");
       }
 
-      await refreshGame();
+      void refreshGame();
     } catch (err) {
+      setGame((prev) =>
+        prev ? { ...prev, current_fen: previousFen } : prev
+      );
+
       setError(
         err instanceof Error ? err.message : "Something went wrong."
       );
 
-      await refreshGame();
+      void refreshGame();
     } finally {
       setBusy(false);
     }
@@ -730,6 +804,21 @@ function MultiplayerMatchContent() {
                 </div>
               </div>
 
+              {clock ? (
+                <div className="mb-3">
+                  <ChessClock
+                    name={orientation === "white" ? "Black" : "White"}
+                    detail="Opponent"
+                    ms={orientation === "white" ? clock.black : clock.white}
+                    daily={clock.daily}
+                    active={
+                      game.current_fen.split(" ")[1] ===
+                      (orientation === "white" ? "b" : "w")
+                    }
+                  />
+                </div>
+              ) : null}
+
               <div className="overflow-hidden rounded-xl">
                 <Chessboard
                   options={{
@@ -756,6 +845,21 @@ function MultiplayerMatchContent() {
                   }}
                 />
               </div>
+
+              {clock ? (
+                <div className="mt-3">
+                  <ChessClock
+                    name={orientation === "white" ? "White" : "Black"}
+                    detail="You"
+                    ms={orientation === "white" ? clock.white : clock.black}
+                    daily={clock.daily}
+                    active={
+                      game.current_fen.split(" ")[1] ===
+                      (orientation === "white" ? "w" : "b")
+                    }
+                  />
+                </div>
+              ) : null}
 
               <div className="mt-4 rounded-xl border border-[color:var(--line)] bg-[var(--panel)] p-4">
                 {completed ? (
