@@ -282,8 +282,16 @@ begin
     raise exception 'Invalid game result.';
   end if;
 
-  if p_result in ('white_win', 'black_win') and p_winner_id is null then
-    raise exception 'A winning result must include a winner.';
+  if p_result in ('white_win', 'black_win')
+     and p_winner_id is distinct from case
+       when p_result = 'white_win' then v_game.white_player_id
+       else v_game.black_player_id
+     end then
+    raise exception 'The winner does not match the game result.';
+  end if;
+
+  if p_result = 'draw' and p_winner_id is not null then
+    raise exception 'A drawn game cannot have a winner.';
   end if;
 
   insert into public.game_moves (
@@ -510,6 +518,13 @@ $$;
 
 -- Browser lobby RPCs require an authenticated session. API routes use the service role
 -- after verifying the caller's access token and pass the verified user id explicitly.
+revoke all on function public.create_online_game() from public, anon;
+revoke all on function public.join_online_game(text) from public, anon;
+revoke all on function public.commit_chess_move(uuid, uuid, text, text, text, text, text, text, text, integer, text, uuid) from public, anon, authenticated;
+revoke all on function public.handle_chess_game_action(uuid, uuid, text) from public, anon, authenticated;
+revoke all on function public.request_chess_rematch(uuid, uuid) from public, anon, authenticated;
+revoke all on function public.respond_chess_rematch(uuid, uuid, text) from public, anon, authenticated;
+
 grant execute on function public.create_online_game() to authenticated;
 grant execute on function public.join_online_game(text) to authenticated;
 grant execute on function public.commit_chess_move(uuid, uuid, text, text, text, text, text, text, text, integer, text, uuid) to service_role;
