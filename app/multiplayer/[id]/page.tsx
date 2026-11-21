@@ -10,7 +10,7 @@ import {
 } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Chess } from "chess.js";
-import { Chessboard } from "react-chessboard";
+import RealisticChessboard from "@/components/RealisticChessboard";
 import { initSounds, playSound } from "@/lib/sound";
 import ChessClock from "@/components/ChessClock";
 import {
@@ -833,7 +833,7 @@ function MultiplayerMatchContent() {
               ) : null}
 
               <div className="overflow-hidden rounded-xl">
-                <Chessboard
+                <RealisticChessboard
                   options={{
                     id: `multiplayer-${gameId}`,
                     position: game.current_fen,
