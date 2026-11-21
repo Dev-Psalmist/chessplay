@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Chess, type Square } from "chess.js";
-import { Chessboard } from "react-chessboard";
+import RealisticChessboard from "@/components/RealisticChessboard";
 import ChessClock from "@/components/ChessClock";
 import AppNav from "@/components/AppNav";
 import { DEFAULT_TIME_CONTROL, TIME_CONTROLS, getTimeControl } from "@/lib/clock";
@@ -418,7 +418,7 @@ export default function PlayPage() {
                 flagged={flagged === "black"}
               />
 
-              <Chessboard
+              <RealisticChessboard
                 options={{
                   id: "chess-play-board",
                   position: fen,
