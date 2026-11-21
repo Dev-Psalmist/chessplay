@@ -1,230 +1,150 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
-type PlayerProfile = {
-  id: string;
-  username: string;
-  display_name: string | null;
-  avatar_url: string | null;
-  rating: number;
-  games_played: number;
-  wins: number;
-  losses: number;
-  draws: number;
-  reward_points: number;
-};
-
-export default function ProfilePage() {
+export default function HomePage() {
   const router = useRouter();
 
-  const [profile, setProfile] = useState<PlayerProfile | null>(null);
+  const [loggedIn, setLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState("");
 
   useEffect(() => {
-    let active = true;
+    async function checkSession() {
+      const { data: { user } } = await supabase.auth.getUser();
 
-    async function loadProfile() {
-      try {
-        const {
-          data: { user },
-          error: authError,
-        } = await supabase.auth.getUser();
-
-        if (authError) {
-          throw new Error(`Authentication error: ${authError.message}`);
-        }
-
-        if (!user) {
-          router.replace("/login");
-          return;
-        }
-
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", user.id)
-          .maybeSingle();
-
-        if (error) {
-          throw new Error(
-            `Profile database error: ${error.message} (Code: ${error.code})`
-          );
-        }
-
-        if (!data) {
-          throw new Error(
-            "Your account exists, but no matching player profile was found."
-          );
-        }
-
-        if (active) {
-          setProfile(data as PlayerProfile);
-        }
-      } catch (error) {
-        if (active) {
-          setMessage(
-            error instanceof Error
-              ? error.message
-              : "An unexpected error occurred."
-          );
-        }
-      } finally {
-        if (active) {
-          setLoading(false);
-        }
-      }
+      setLoggedIn(!!user);
+      setLoading(false);
     }
 
-    loadProfile();
-
-    return () => {
-      active = false;
-    };
-  }, [router]);
+    checkSession();
+  }, []);
 
   async function handleLogout() {
-    const { error } = await supabase.auth.signOut();
-
-    if (error) {
-      setMessage(error.message);
-      return;
-    }
-
-    router.replace("/login");
+    await supabase.auth.signOut();
+    setLoggedIn(false);
     router.refresh();
   }
 
-  if (loading) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-[#080d18] text-white">
-        Loading your player profile...
-      </main>
-    );
-  }
-
-  if (!profile) {
-    return (
-      <main className="flex min-h-screen flex-col items-center justify-center gap-5 bg-[#080d18] px-5 text-white">
-        <h1 className="text-3xl font-bold">Profile unavailable</h1>
-
-        <div className="max-w-lg rounded-xl border border-red-500/20 bg-red-500/10 p-5 text-center text-red-300">
-          {message}
-        </div>
-
-        <button
-          onClick={() => window.location.reload()}
-          className="rounded-lg bg-blue-600 px-6 py-3 font-semibold hover:bg-blue-500"
-        >
-          Try Again
-        </button>
-
-        <button
-          onClick={() => router.push("/login")}
-          className="text-sm text-gray-400 hover:text-white"
-        >
-          Return to Login
-        </button>
-      </main>
-    );
-  }
-
-  const stats = [
-    { label: "Games Played", value: profile.games_played },
-    { label: "Victories", value: profile.wins },
-    { label: "Defeats", value: profile.losses },
-    { label: "Draws", value: profile.draws },
-    { label: "Reward Points", value: profile.reward_points },
-  ];
-
   return (
-    <main className="min-h-screen bg-[#080d18] px-5 py-12 text-white">
-      <div className="mx-auto max-w-4xl">
+    <main className="min-h-screen overflow-hidden bg-[#080d18] text-white">
 
-        <header className="mb-10 flex items-center justify-between">
-          <h1 className="text-3xl font-bold">♟ Chess Play</h1>
+      <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-7">
 
-          <button
-            onClick={handleLogout}
-            className="rounded-lg border border-white/10 px-4 py-2 text-sm hover:bg-white/10"
-          >
-            Logout
-          </button>
-        </header>
+        <Link href="/" className="text-2xl font-black tracking-tight">
+          ♟ CHESS<span className="text-amber-400">PLAY</span>
+        </Link>
 
-        <section className="rounded-2xl border border-white/10 bg-[#111a2b] p-8">
+        <div className="flex items-center gap-3">
 
-          <div className="flex flex-col items-center text-center">
+          {!loading && loggedIn ? (
+            <>
+              <Link
+                href="/profile"
+                className="rounded-lg border border-white/10 px-4 py-2 text-sm hover:bg-white/10"
+              >
+                My Profile
+              </Link>
 
-            <div className="mb-5 flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-blue-600 text-4xl font-bold">
-              {profile.avatar_url ? (
-                <img
-                  src={profile.avatar_url}
-                  alt="Player avatar"
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                "♟"
-              )}
-            </div>
+              <button
+                onClick={handleLogout}
+                className="rounded-lg bg-white/10 px-4 py-2 text-sm hover:bg-white/20"
+              >
+                Logout
+              </button>
+            </>
+          ) : !loading ? (
+            <Link
+              href="/login"
+              className="rounded-lg bg-amber-500 px-5 py-2 font-semibold text-black hover:bg-amber-400"
+            >
+              Sign In
+            </Link>
+          ) : null}
 
-            <h2 className="text-3xl font-bold">
-              {profile.display_name || profile.username}
-            </h2>
+        </div>
+      </nav>
 
-            <p className="mt-2 text-gray-400">
-              @{profile.username}
-            </p>
+      <section className="relative mx-auto flex max-w-7xl flex-col items-center px-6 pb-24 pt-20 text-center">
 
-            <div className="mt-6 rounded-xl bg-blue-600/10 px-10 py-5">
-              <p className="text-sm text-gray-400">
-                Chess Rating
-              </p>
+        <div className="absolute left-1/2 top-10 -z-0 h-96 w-96 -translate-x-1/2 rounded-full bg-amber-500/10 blur-[120px]" />
 
-              <p className="mt-1 text-5xl font-bold text-blue-400">
-                {profile.rating}
-              </p>
+        <div className="relative z-10">
 
-              <p className="mt-1 text-xs text-gray-500">
-                ELO
-              </p>
-            </div>
+          <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-amber-500/20 bg-amber-500/10 px-5 py-2 text-sm text-amber-300">
+            ♟ THINK. MOVE. CONQUER.
+          </div>
+
+          <h1 className="mx-auto max-w-4xl text-5xl font-black leading-tight tracking-tight sm:text-7xl">
+            Every Match.
+            <br />
+            Every Move.
+            <br />
+            <span className="text-amber-400">Every Victory.</span>
+          </h1>
+
+          <p className="mx-auto mt-7 max-w-2xl text-lg leading-relaxed text-gray-400">
+            Welcome to ChessPlay, where strategy meets intelligence.
+            Challenge yourself against powerful AI opponents and
+            sharpen your skills one move at a time.
+          </p>
+
+          <div className="mt-10 flex flex-wrap justify-center gap-4">
+
+            <Link
+              href="/play"
+              className="rounded-xl bg-amber-500 px-9 py-4 font-bold text-black transition hover:-translate-y-1 hover:bg-amber-400"
+            >
+              Play Chess Now →
+            </Link>
+
+            <Link
+              href={loggedIn ? "/profile" : "/login"}
+              className="rounded-xl border border-white/15 px-9 py-4 font-semibold transition hover:bg-white/10"
+            >
+              {loggedIn ? "My Player Profile" : "Create Account"}
+            </Link>
 
           </div>
 
-          <div className="mt-10">
-            <h3 className="mb-5 text-xl font-semibold">
-              Player Statistics
-            </h3>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
-              {stats.map((stat) => (
-                <div
-                  key={stat.label}
-                  className="rounded-xl border border-white/10 bg-[#080d18] p-5"
-                >
-                  <p className="text-sm text-gray-400">
-                    {stat.label}
-                  </p>
-
-                  <p className="mt-2 text-3xl font-bold">
-                    {stat.value}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-        </section>
-
-        <div className="mt-8 text-center text-sm text-gray-500">
-          Your chess journey starts here.
         </div>
 
-      </div>
+        <div className="relative mt-20 grid w-full max-w-4xl grid-cols-1 gap-5 sm:grid-cols-3">
+
+          <div className="rounded-2xl border border-white/10 bg-[#111827]/80 p-7">
+            <div className="text-4xl">♟</div>
+            <h2 className="mt-4 text-lg font-bold">AI Opponents</h2>
+            <p className="mt-2 text-sm leading-relaxed text-gray-400">
+              Challenge Stockfish and choose your preferred difficulty.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-white/10 bg-[#111827]/80 p-7">
+            <div className="text-4xl">♛</div>
+            <h2 className="mt-4 text-lg font-bold">Player Profiles</h2>
+            <p className="mt-2 text-sm leading-relaxed text-gray-400">
+              Track your chess rating, victories and playing statistics.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-white/10 bg-[#111827]/80 p-7">
+            <div className="text-4xl">🏆</div>
+            <h2 className="mt-4 text-lg font-bold">Your Journey</h2>
+            <p className="mt-2 text-sm leading-relaxed text-gray-400">
+              Develop your strategy and become a stronger chess player.
+            </p>
+          </div>
+
+        </div>
+
+      </section>
+
+      <footer className="border-t border-white/5 px-6 py-8 text-center text-sm text-gray-500">
+        © 2026 ChessPlay. Think Ahead. Play Smart.
+      </footer>
+
     </main>
   );
 }
