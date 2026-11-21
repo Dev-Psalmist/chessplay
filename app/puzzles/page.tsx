@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Chess, type Square } from "chess.js";
-import { Chessboard } from "react-chessboard";
+import RealisticChessboard from "@/components/RealisticChessboard";
 import {
   ArrowRight,
   CheckCircle2,
@@ -318,7 +318,7 @@ export default function PuzzlesPage() {
             </div>
 
             <div className="board-shell mt-5">
-              <Chessboard
+              <RealisticChessboard
                 options={{
                   id: `puzzle-${puzzle.id}`,
                   position: game.fen(),
