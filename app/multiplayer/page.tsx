@@ -212,12 +212,12 @@ export default function MultiplayerPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#080d18] px-5 py-10 text-white">
+    <main className="min-h-screen bg-[var(--bg)] px-5 py-10 text-white">
       <div className="mx-auto max-w-4xl">
 
         <button
           onClick={() => router.push("/")}
-          className="mb-8 flex items-center gap-2 text-sm text-gray-400 transition hover:text-white"
+          className="mb-8 flex items-center gap-2 text-sm text-[color:var(--muted)] transition hover:text-white"
         >
           <ArrowLeft size={17} />
           Back to Home
@@ -230,7 +230,7 @@ export default function MultiplayerPage() {
             Online Multiplayer
           </h1>
 
-          <p className="mt-3 text-gray-400">
+          <p className="mt-3 text-[color:var(--muted)]">
             Challenge a friend. Every move counts.
           </p>
         </header>
@@ -240,7 +240,7 @@ export default function MultiplayerPage() {
 
             {/* CREATE GAME */}
             <section className="rounded-2xl border border-white/10 bg-[#111a2b] p-7">
-              <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-blue-600/20 text-blue-400">
+              <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-blue-600/20 text-[color:var(--accent-2)]">
                 <Swords size={28} />
               </div>
 
@@ -248,7 +248,7 @@ export default function MultiplayerPage() {
                 Create a Game
               </h2>
 
-              <p className="mt-3 min-h-12 text-sm leading-6 text-gray-400">
+              <p className="mt-3 min-h-12 text-sm leading-6 text-[color:var(--muted)]">
                 Start a new chess match and invite someone to play against you.
               </p>
 
@@ -263,7 +263,7 @@ export default function MultiplayerPage() {
 
             {/* JOIN GAME */}
             <section className="rounded-2xl border border-white/10 bg-[#111a2b] p-7">
-              <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400">
+              <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-emerald-500/20 text-[color:var(--good)]">
                 <Users size={28} />
               </div>
 
@@ -271,7 +271,7 @@ export default function MultiplayerPage() {
                 Join a Game
               </h2>
 
-              <p className="mt-3 min-h-12 text-sm leading-6 text-gray-400">
+              <p className="mt-3 min-h-12 text-sm leading-6 text-[color:var(--muted)]">
                 Have an invitation code? Enter it below to join your friend's match.
               </p>
 
@@ -284,7 +284,7 @@ export default function MultiplayerPage() {
                     setInviteCode(e.target.value.toUpperCase())
                   }
                   placeholder="ENTER CODE"
-                  className="w-full rounded-xl border border-white/10 bg-[#080d18] px-4 py-3 text-center text-lg font-bold tracking-[0.3em] text-white outline-none placeholder:text-gray-600 focus:border-emerald-500"
+                  className="w-full rounded-xl border border-white/10 bg-[var(--bg)] px-4 py-3 text-center text-lg font-bold tracking-[0.3em] text-white outline-none placeholder:text-gray-600 focus:border-emerald-500"
                 />
 
                 <button
@@ -301,7 +301,7 @@ export default function MultiplayerPage() {
         ) : (
           <section className="mx-auto max-w-xl rounded-2xl border border-white/10 bg-[#111a2b] p-8 text-center">
 
-            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-400">
+            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10 text-[color:var(--good)]">
               <CheckCircle2 size={34} />
             </div>
 
@@ -311,18 +311,18 @@ export default function MultiplayerPage() {
                 : "Your Game Is Ready"}
             </h2>
 
-            <p className="mt-3 text-gray-400">
+            <p className="mt-3 text-[color:var(--muted)]">
               {room.status === "active"
                 ? "Both players are connected. Your match is ready to begin."
                 : "Share this invitation code with your opponent."}
             </p>
 
-            <div className="mt-8 rounded-xl border border-white/10 bg-[#080d18] p-6">
-              <p className="text-xs uppercase tracking-widest text-gray-500">
+            <div className="mt-8 rounded-xl border border-white/10 bg-[var(--bg)] p-6">
+              <p className="text-xs uppercase tracking-widest text-[color:var(--muted)]">
                 Invitation Code
               </p>
 
-              <p className="my-4 text-4xl font-bold tracking-[0.25em] text-blue-400">
+              <p className="my-4 text-4xl font-bold tracking-[0.25em] text-[color:var(--accent-2)]">
                 {room.invite_code}
               </p>
 
@@ -342,12 +342,12 @@ export default function MultiplayerPage() {
             </div>
 
             <div className="mt-6 rounded-xl bg-white/5 p-4 text-sm">
-              <p className="text-gray-400">Match status</p>
+              <p className="text-[color:var(--muted)]">Match status</p>
 
               <p
                 className={`mt-2 font-semibold ${
                   room.status === "active"
-                    ? "text-emerald-400"
+                    ? "text-[color:var(--good)]"
                     : "text-yellow-400"
                 }`}
               >
@@ -377,7 +377,7 @@ export default function MultiplayerPage() {
                 setMessage("");
                 setCopied(false);
               }}
-              className="mt-7 text-sm text-gray-400 hover:text-white"
+              className="mt-7 text-sm text-[color:var(--muted)] hover:text-white"
             >
               Return to Multiplayer Lobby
             </button>
@@ -386,7 +386,7 @@ export default function MultiplayerPage() {
         )}
 
         {message && (
-          <div className="mt-6 rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-center text-sm text-red-300">
+          <div className="mt-6 rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-center text-sm text-[color:var(--bad)]">
             {message}
           </div>
         )}

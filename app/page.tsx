@@ -29,18 +29,25 @@ export default function HomePage() {
   }
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[#080d18] text-white">
+    <main className="min-h-screen overflow-hidden bg-[var(--bg)] text-white">
 
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-7">
 
         <Link href="/" className="text-2xl font-black tracking-tight">
-          ♟ CHESS<span className="text-amber-400">PLAY</span>
+          ♟ CHESS<span className="text-[color:var(--gold)]">PLAY</span>
         </Link>
 
         <div className="flex items-center gap-3">
 
           {!loading && loggedIn ? (
             <>
+              <Link
+                href="/puzzles"
+                className="rounded-lg border border-white/10 px-4 py-2 text-sm hover:bg-white/10"
+              >
+                Puzzles
+              </Link>
+
               <Link
                 href="/profile"
                 className="rounded-lg border border-white/10 px-4 py-2 text-sm hover:bg-white/10"
@@ -58,7 +65,7 @@ export default function HomePage() {
           ) : !loading ? (
             <Link
               href="/login"
-              className="rounded-lg bg-amber-500 px-5 py-2 font-semibold text-black hover:bg-amber-400"
+              className="rounded-lg bg-[color:var(--gold)] px-5 py-2 font-semibold text-black hover:opacity-90"
             >
               Sign In
             </Link>
@@ -69,11 +76,11 @@ export default function HomePage() {
 
       <section className="relative mx-auto flex max-w-7xl flex-col items-center px-6 pb-24 pt-20 text-center">
 
-        <div className="absolute left-1/2 top-10 -z-0 h-96 w-96 -translate-x-1/2 rounded-full bg-amber-500/10 blur-[120px]" />
+        <div className="absolute left-1/2 top-10 -z-0 h-96 w-96 -translate-x-1/2 rounded-full bg-[color:var(--gold)]/10 blur-[120px]" />
 
         <div className="relative z-10">
 
-          <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-amber-500/20 bg-amber-500/10 px-5 py-2 text-sm text-amber-300">
+          <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-[color:var(--gold)]/20 bg-[color:var(--gold)]/10 px-5 py-2 text-sm text-[color:var(--gold)]">
             ♟ THINK. MOVE. CONQUER.
           </div>
 
@@ -82,10 +89,10 @@ export default function HomePage() {
             <br />
             Every Move.
             <br />
-            <span className="text-amber-400">Every Victory.</span>
+            <span className="text-[color:var(--gold)]">Every Victory.</span>
           </h1>
 
-          <p className="mx-auto mt-7 max-w-2xl text-lg leading-relaxed text-gray-400">
+          <p className="mx-auto mt-7 max-w-2xl text-lg leading-relaxed text-[color:var(--muted)]">
             Welcome to ChessPlay, where strategy meets intelligence.
             Challenge yourself against powerful AI opponents and
             sharpen your skills one move at a time.
@@ -95,7 +102,7 @@ export default function HomePage() {
 
             <Link
               href="/play"
-              className="rounded-xl bg-amber-500 px-9 py-4 font-bold text-black transition hover:-translate-y-1 hover:bg-amber-400"
+              className="rounded-xl bg-[color:var(--gold)] px-9 py-4 font-bold text-black transition hover:-translate-y-1 hover:opacity-90"
             >
               Play Chess Now →
             </Link>
@@ -113,26 +120,26 @@ export default function HomePage() {
 
         <div className="relative mt-20 grid w-full max-w-4xl grid-cols-1 gap-5 sm:grid-cols-3">
 
-          <div className="rounded-2xl border border-white/10 bg-[#111827]/80 p-7">
+          <div className="rounded-2xl border border-white/10 bg-[var(--panel)]/80 p-7">
             <div className="text-4xl">♟</div>
             <h2 className="mt-4 text-lg font-bold">AI Opponents</h2>
-            <p className="mt-2 text-sm leading-relaxed text-gray-400">
+            <p className="mt-2 text-sm leading-relaxed text-[color:var(--muted)]">
               Challenge Stockfish and choose your preferred difficulty.
             </p>
           </div>
 
-          <div className="rounded-2xl border border-white/10 bg-[#111827]/80 p-7">
+          <div className="rounded-2xl border border-white/10 bg-[var(--panel)]/80 p-7">
             <div className="text-4xl">♛</div>
             <h2 className="mt-4 text-lg font-bold">Player Profiles</h2>
-            <p className="mt-2 text-sm leading-relaxed text-gray-400">
+            <p className="mt-2 text-sm leading-relaxed text-[color:var(--muted)]">
               Track your chess rating, victories and playing statistics.
             </p>
           </div>
 
-          <div className="rounded-2xl border border-white/10 bg-[#111827]/80 p-7">
+          <div className="rounded-2xl border border-white/10 bg-[var(--panel)]/80 p-7">
             <div className="text-4xl">🏆</div>
             <h2 className="mt-4 text-lg font-bold">Your Journey</h2>
-            <p className="mt-2 text-sm leading-relaxed text-gray-400">
+            <p className="mt-2 text-sm leading-relaxed text-[color:var(--muted)]">
               Develop your strategy and become a stronger chess player.
             </p>
           </div>
@@ -141,7 +148,7 @@ export default function HomePage() {
 
       </section>
 
-      <footer className="border-t border-white/5 px-6 py-8 text-center text-sm text-gray-500">
+      <footer className="border-t border-white/5 px-6 py-8 text-center text-sm text-[color:var(--muted)]">
         © 2026 ChessPlay. Think Ahead. Play Smart.
       </footer>
 

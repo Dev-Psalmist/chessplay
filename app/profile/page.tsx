@@ -67,7 +67,7 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-[#080d18] text-white">
+      <main className="min-h-screen flex items-center justify-center bg-[var(--bg)] text-white">
         Loading your player profile...
       </main>
     );
@@ -75,9 +75,9 @@ export default function ProfilePage() {
 
   if (!profile) {
     return (
-      <main className="min-h-screen flex flex-col items-center justify-center gap-4 bg-[#080d18] px-4 text-white">
+      <main className="min-h-screen flex flex-col items-center justify-center gap-4 bg-[var(--bg)] px-4 text-white">
         <h1 className="text-2xl font-bold">Profile unavailable</h1>
-        <p className="text-gray-400">{message}</p>
+        <p className="text-[color:var(--muted)]">{message}</p>
         <button
           onClick={() => router.push("/login")}
           className="rounded-lg bg-blue-600 px-6 py-3"
@@ -97,7 +97,7 @@ export default function ProfilePage() {
   ];
 
   return (
-    <main className="min-h-screen bg-[#080d18] px-5 py-12 text-white">
+    <main className="min-h-screen bg-[var(--bg)] px-5 py-12 text-white">
 
       <div className="mx-auto max-w-4xl">
 
@@ -132,20 +132,20 @@ export default function ProfilePage() {
               {profile.display_name || profile.username}
             </h2>
 
-            <p className="mt-2 text-gray-400">
+            <p className="mt-2 text-[color:var(--muted)]">
               @{profile.username}
             </p>
 
             <div className="mt-6 rounded-xl bg-blue-600/10 px-10 py-5">
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-[color:var(--muted)]">
                 Chess Rating
               </p>
 
-              <p className="mt-1 text-5xl font-bold text-blue-400">
+              <p className="mt-1 text-5xl font-bold text-[color:var(--accent-2)]">
                 {profile.rating}
               </p>
 
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-[color:var(--muted)]">
                 ELO
               </p>
             </div>
@@ -162,9 +162,9 @@ export default function ProfilePage() {
               {stats.map((stat) => (
                 <div
                   key={stat.label}
-                  className="rounded-xl border border-white/10 bg-[#080d18] p-5"
+                  className="rounded-xl border border-white/10 bg-[var(--bg)] p-5"
                 >
-                  <p className="text-sm text-gray-400">
+                  <p className="text-sm text-[color:var(--muted)]">
                     {stat.label}
                   </p>
 
@@ -179,7 +179,7 @@ export default function ProfilePage() {
 
         </section>
 
-        <div className="mt-8 text-center text-sm text-gray-500">
+        <div className="mt-8 text-center text-sm text-[color:var(--muted)]">
           Your chess journey starts here.
         </div>
 

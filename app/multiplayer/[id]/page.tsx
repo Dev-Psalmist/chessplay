@@ -4,12 +4,25 @@ import {
   Suspense,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Chess } from "chess.js";
 import { Chessboard } from "react-chessboard";
+import { initSounds, playSound } from "@/lib/sound";
+import {
+  boardFrameStyle,
+  darkNotationStyle,
+  darkSquareStyle,
+  draggingPieceGhostStyle,
+  draggingPieceStyle,
+  dropSquareStyle,
+  lightNotationStyle,
+  lightSquareStyle,
+  squareHighlights,
+} from "@/lib/board-theme";
 import { supabase } from "@/lib/supabase";
 
 type Game = {
@@ -64,6 +77,76 @@ function MultiplayerMatchContent() {
 
   const [userId, setUserId] = useState("");
   const [game, setGame] = useState<Game | null>(null);
+  const seenFenRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    initSounds();
+  }, []);
+
+  useEffect(() => {
+    const fen = game?.current_fen;
+
+    if (!fen) return;
+
+    if (seenFenRef.current === null) {
+      seenFenRef.current = fen;
+      return;
+    }
+
+    if (seenFenRef.current === fen) return;
+
+    seenFenRef.current = fen;
+
+    try {
+      const probe = new Chess(fen);
+      const last = probe.history({ verbose: true }).slice(-1)[0];
+
+      if (!last) return;
+
+      if (last.promotion) playSound("promote");
+      else if (last.flags.includes("k") || last.flags.includes("q")) playSound("castle");
+      else if (last.captured) playSound("capture");
+      else playSound("move");
+
+      if (probe.isGameOver()) window.setTimeout(() => playSound("game-end"), 200);
+      else if (probe.isCheck()) window.setTimeout(() => playSound("check"), 140);
+    } catch {
+      /* a malformed fen should never break the board */
+    }
+  }, [game?.current_fen]);
+  const lastMoveSquares = useMemo(() => {
+    if (!game?.current_fen) return [] as string[];
+
+    try {
+      const probe = new Chess(game.current_fen);
+      const last = probe.history({ verbose: true }).slice(-1)[0];
+      return last ? [last.from, last.to] : [];
+    } catch {
+      return [] as string[];
+    }
+  }, [game?.current_fen]);
+
+  const checkedKing = useMemo(() => {
+    if (!game?.current_fen) return undefined;
+
+    try {
+      const probe = new Chess(game.current_fen);
+
+      if (!probe.isCheck()) return undefined;
+
+      for (const row of probe.board()) {
+        for (const cell of row) {
+          if (cell && cell.type === "k" && cell.color === probe.turn()) {
+            return cell.square;
+          }
+        }
+      }
+    } catch {
+      return undefined;
+    }
+
+    return undefined;
+  }, [game?.current_fen]);
   const [moves, setMoves] = useState<Move[]>([]);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
@@ -547,7 +630,7 @@ function MultiplayerMatchContent() {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#080d18] text-white">
+      <main className="flex min-h-screen items-center justify-center bg-[var(--bg)] text-white">
         Loading your match...
       </main>
     );
@@ -555,8 +638,8 @@ function MultiplayerMatchContent() {
 
   if (error && !game) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#080d18] p-6 text-white">
-        <p className="text-red-400">{error}</p>
+      <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[var(--bg)] p-6 text-white">
+        <p className="text-[color:var(--bad)]">{error}</p>
 
         <button
           onClick={() => router.push("/multiplayer")}
@@ -587,11 +670,11 @@ function MultiplayerMatchContent() {
   const pendingRematch = rematchRequest?.status === "pending";
 
   return (
-    <main className="min-h-screen bg-[#080d18] px-4 py-8 text-white">
+    <main className="min-h-screen bg-[var(--bg)] px-4 py-8 text-white">
       <div className="mx-auto max-w-6xl">
         <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="text-sm uppercase tracking-[0.3em] text-blue-400">
+            <p className="text-sm uppercase tracking-[0.3em] text-[color:var(--accent-2)]">
               ChessPlay Online
             </p>
 
@@ -599,35 +682,35 @@ function MultiplayerMatchContent() {
               Multiplayer Match
             </h1>
 
-            <p className="mt-1 text-sm text-slate-400">
+            <p className="mt-1 text-sm text-[color:var(--muted)]">
               Game ID: {game.id.slice(0, 8)}
             </p>
           </div>
 
           <button
             onClick={() => router.push("/multiplayer")}
-            className="rounded-xl border border-slate-700 px-4 py-2 text-sm hover:bg-slate-800"
+            className="rounded-xl border border-[color:var(--line)] px-4 py-2 text-sm hover:bg-[var(--panel-2)]"
           >
             Back to Lobby
           </button>
         </header>
 
         {waiting ? (
-          <section className="rounded-2xl border border-slate-700 bg-slate-900 p-8 text-center">
+          <section className="rounded-2xl border border-[color:var(--line)] bg-[var(--panel)] p-8 text-center">
             <h2 className="text-xl font-semibold">
               Waiting for your opponent
             </h2>
 
-            <p className="mt-3 text-slate-400">
+            <p className="mt-3 text-[color:var(--muted)]">
               Share your invitation code from the multiplayer lobby.
             </p>
           </section>
         ) : (
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
             <section>
-              <div className="mb-4 flex items-center justify-between rounded-xl border border-slate-700 bg-slate-900 p-4">
+              <div className="mb-4 flex items-center justify-between rounded-xl border border-[color:var(--line)] bg-[var(--panel)] p-4">
                 <div>
-                  <p className="text-xs uppercase text-slate-400">
+                  <p className="text-xs uppercase text-[color:var(--muted)]">
                     You are playing as
                   </p>
 
@@ -637,11 +720,11 @@ function MultiplayerMatchContent() {
                 </div>
 
                 <div className="text-right">
-                  <p className="text-xs uppercase text-slate-400">
+                  <p className="text-xs uppercase text-[color:var(--muted)]">
                     Match status
                   </p>
 
-                  <p className="mt-1 font-semibold text-emerald-400">
+                  <p className="mt-1 font-semibold text-[color:var(--good)]">
                     {completed ? "Completed" : "Live"}
                   </p>
                 </div>
@@ -656,33 +739,45 @@ function MultiplayerMatchContent() {
                     onPieceDrop: handlePieceDrop,
                     allowDragging:
                       !completed && !waiting && isMyTurn && !busy,
-                    animationDurationInMs: 180,
+                    animationDurationInMs: 160,
                     showNotation: true,
+                    boardStyle: boardFrameStyle,
+                    darkSquareStyle,
+                    lightSquareStyle,
+                    dropSquareStyle,
+                    draggingPieceStyle,
+                    draggingPieceGhostStyle,
+                    darkSquareNotationStyle: darkNotationStyle,
+                    lightSquareNotationStyle: lightNotationStyle,
+                    squareStyles: squareHighlights({
+                      lastMove: lastMoveSquares,
+                      check: checkedKing,
+                    }),
                   }}
                 />
               </div>
 
-              <div className="mt-4 rounded-xl border border-slate-700 bg-slate-900 p-4">
+              <div className="mt-4 rounded-xl border border-[color:var(--line)] bg-[var(--panel)] p-4">
                 {completed ? (
-                  <p className="font-semibold text-emerald-400">
+                  <p className="font-semibold text-[color:var(--good)]">
                     {resultText()}
                   </p>
                 ) : busy ? (
-                  <p className="text-blue-300">
+                  <p className="text-[color:var(--accent-2)]">
                     Saving your move...
                   </p>
                 ) : isMyTurn ? (
-                  <p className="text-emerald-400">
+                  <p className="text-[color:var(--good)]">
                     Your turn. Make your move.
                   </p>
                 ) : (
-                  <p className="text-slate-400">
+                  <p className="text-[color:var(--muted)]">
                     Waiting for your opponent to move...
                   </p>
                 )}
 
                 {error && (
-                  <p className="mt-3 text-sm text-red-400">
+                  <p className="mt-3 text-sm text-[color:var(--bad)]">
                     {error}
                   </p>
                 )}
@@ -690,18 +785,18 @@ function MultiplayerMatchContent() {
 
               {/* DRAW AND RESIGN ACTIONS */}
               {!completed && (
-                <section className="mt-6 rounded-2xl border border-slate-700 bg-slate-900 p-5">
+                <section className="mt-6 rounded-2xl border border-[color:var(--line)] bg-[var(--panel)] p-5">
                   <h2 className="text-xl font-bold">
                     Game Actions
                   </h2>
 
-                  <p className="mt-1 text-sm text-slate-400">
+                  <p className="mt-1 text-sm text-[color:var(--muted)]">
                     Manage your match or agree to a draw with your opponent.
                   </p>
 
                   {opponentOfferedDraw ? (
-                    <div className="mt-4 rounded-xl border border-amber-500/40 bg-amber-500/10 p-4">
-                      <p className="font-semibold text-amber-300">
+                    <div className="mt-4 rounded-xl border border-[color:var(--gold)]/40 bg-[color:var(--gold)]/10 p-4">
+                      <p className="font-semibold text-[color:var(--gold)]">
                         Your opponent has offered a draw.
                       </p>
 
@@ -717,27 +812,27 @@ function MultiplayerMatchContent() {
                         <button
                           onClick={() => handleGameAction("decline_draw")}
                           disabled={actionBusy}
-                          className="rounded-lg border border-slate-600 px-4 py-2 text-sm font-semibold hover:bg-slate-800 disabled:opacity-50"
+                          className="rounded-lg border border-[color:var(--line)] px-4 py-2 text-sm font-semibold hover:bg-[var(--panel-2)] disabled:opacity-50"
                         >
                           Decline Draw
                         </button>
                       </div>
                     </div>
                   ) : iOfferedDraw ? (
-                    <p className="mt-4 rounded-xl bg-blue-500/10 p-4 text-sm text-blue-300">
+                    <p className="mt-4 rounded-xl bg-blue-500/10 p-4 text-sm text-[color:var(--accent-2)]">
                       Draw offer sent. Waiting for your opponent to respond.
                     </p>
                   ) : (
                     <button
                       onClick={() => handleGameAction("offer_draw")}
                       disabled={actionBusy}
-                      className="mt-4 rounded-lg border border-blue-500 px-4 py-2 text-sm font-semibold text-blue-300 hover:bg-blue-500/10 disabled:opacity-50"
+                      className="mt-4 rounded-lg border border-blue-500 px-4 py-2 text-sm font-semibold text-[color:var(--accent-2)] hover:bg-blue-500/10 disabled:opacity-50"
                     >
                       Offer Draw
                     </button>
                   )}
 
-                  <div className="mt-5 border-t border-slate-700 pt-5">
+                  <div className="mt-5 border-t border-[color:var(--line)] pt-5">
                     <button
                       onClick={() => handleGameAction("resign")}
                       disabled={actionBusy}
@@ -746,7 +841,7 @@ function MultiplayerMatchContent() {
                       {actionBusy ? "Processing..." : "Resign Game"}
                     </button>
 
-                    <p className="mt-2 text-center text-xs text-slate-500">
+                    <p className="mt-2 text-center text-xs text-[color:var(--muted)]">
                       Resigning immediately gives your opponent the win.
                     </p>
                   </div>
@@ -755,7 +850,7 @@ function MultiplayerMatchContent() {
 
               {/* REMATCH SECTION */}
               {completed && (
-                <section className="mt-6 rounded-2xl border border-blue-500/30 bg-slate-900 p-5">
+                <section className="mt-6 rounded-2xl border border-blue-500/30 bg-[var(--panel)] p-5">
                   <div className="flex items-center gap-3">
                     <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-500/10 text-2xl">
                       ♟
@@ -766,7 +861,7 @@ function MultiplayerMatchContent() {
                         Rematch
                       </h2>
 
-                      <p className="text-sm text-slate-400">
+                      <p className="text-sm text-[color:var(--muted)]">
                         Ready for another game?
                       </p>
                     </div>
@@ -774,23 +869,23 @@ function MultiplayerMatchContent() {
 
                   {pendingRematch && iRequestedRematch && (
                     <div className="mt-5 rounded-xl border border-blue-500/30 bg-blue-500/10 p-4">
-                      <p className="font-semibold text-blue-300">
+                      <p className="font-semibold text-[color:var(--accent-2)]">
                         Rematch request sent!
                       </p>
 
-                      <p className="mt-2 text-sm text-slate-300">
+                      <p className="mt-2 text-sm text-[color:var(--muted)]">
                         Waiting for your opponent to accept.
                       </p>
                     </div>
                   )}
 
                   {pendingRematch && opponentRequestedRematch && (
-                    <div className="mt-5 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
-                      <p className="font-semibold text-amber-300">
+                    <div className="mt-5 rounded-xl border border-[color:var(--gold)]/30 bg-[color:var(--gold)]/10 p-4">
+                      <p className="font-semibold text-[color:var(--gold)]">
                         Your opponent wants a rematch!
                       </p>
 
-                      <p className="mt-2 text-sm text-slate-300">
+                      <p className="mt-2 text-sm text-[color:var(--muted)]">
                         Accept to start another game. Your colours will switch.
                       </p>
 
@@ -812,7 +907,7 @@ function MultiplayerMatchContent() {
                             handleRematchAction("decline")
                           }
                           disabled={rematchBusy}
-                          className="rounded-lg border border-slate-600 px-5 py-3 text-sm font-semibold hover:bg-slate-800 disabled:opacity-50"
+                          className="rounded-lg border border-[color:var(--line)] px-5 py-3 text-sm font-semibold hover:bg-[var(--panel-2)] disabled:opacity-50"
                         >
                           Decline
                         </button>
@@ -821,7 +916,7 @@ function MultiplayerMatchContent() {
                   )}
 
                   {rematchRequest?.status === "declined" && (
-                    <p className="mt-4 rounded-xl bg-slate-800 p-4 text-sm text-slate-300">
+                    <p className="mt-4 rounded-xl bg-[var(--panel-2)] p-4 text-sm text-[color:var(--muted)]">
                       The previous rematch request was declined. You can send another request.
                     </p>
                   )}
@@ -849,18 +944,18 @@ function MultiplayerMatchContent() {
                   )}
 
                   {rematchMessage && (
-                    <p className="mt-3 text-sm text-emerald-400">
+                    <p className="mt-3 text-sm text-[color:var(--good)]">
                       {rematchMessage}
                     </p>
                   )}
 
                   {error && (
-                    <p className="mt-3 text-sm text-red-400">
+                    <p className="mt-3 text-sm text-[color:var(--bad)]">
                       {error}
                     </p>
                   )}
 
-                  <p className="mt-4 text-center text-xs text-slate-500">
+                  <p className="mt-4 text-center text-xs text-[color:var(--muted)]">
                     The next game starts with the colours reversed.
                   </p>
                 </section>
@@ -870,18 +965,18 @@ function MultiplayerMatchContent() {
             {/* MOVE HISTORY, CHAT AND PLAYERS */}
             <aside className="space-y-6">
               {/* MOVE HISTORY */}
-              <section className="rounded-2xl border border-slate-700 bg-slate-900 p-5">
+              <section className="rounded-2xl border border-[color:var(--line)] bg-[var(--panel)] p-5">
                 <h2 className="text-xl font-bold">
                   Move History
                 </h2>
 
-                <p className="mt-1 text-sm text-slate-400">
+                <p className="mt-1 text-sm text-[color:var(--muted)]">
                   Moves are synchronized between both players.
                 </p>
 
                 <div className="mt-5 max-h-[350px] overflow-y-auto">
                   {moves.length === 0 ? (
-                    <p className="text-sm text-slate-500">
+                    <p className="text-sm text-[color:var(--muted)]">
                       No moves have been played yet.
                     </p>
                   ) : (
@@ -895,9 +990,9 @@ function MultiplayerMatchContent() {
                           return (
                             <div
                               key={whiteMove.id}
-                              className="grid grid-cols-[40px_1fr_1fr] gap-3 rounded-lg bg-slate-800 p-3 text-sm"
+                              className="grid grid-cols-[40px_1fr_1fr] gap-3 rounded-lg bg-[var(--panel-2)] p-3 text-sm"
                             >
-                              <span className="text-slate-500">
+                              <span className="text-[color:var(--muted)]">
                                 {index + 1}.
                               </span>
 
@@ -912,8 +1007,8 @@ function MultiplayerMatchContent() {
                   )}
                 </div>
 
-                <div className="mt-6 border-t border-slate-700 pt-4">
-                  <p className="text-xs uppercase tracking-wider text-slate-500">
+                <div className="mt-6 border-t border-[color:var(--line)] pt-4">
+                  <p className="text-xs uppercase tracking-wider text-[color:var(--muted)]">
                     Players
                   </p>
 
@@ -934,20 +1029,20 @@ function MultiplayerMatchContent() {
               </section>
 
               {/* IN-GAME CHAT */}
-              <section className="overflow-hidden rounded-2xl border border-blue-500/30 bg-slate-900">
-                <div className="border-b border-slate-700 p-5">
+              <section className="overflow-hidden rounded-2xl border border-blue-500/30 bg-[var(--panel)]">
+                <div className="border-b border-[color:var(--line)] p-5">
                   <div className="flex items-center justify-between">
                     <div>
                       <h2 className="text-xl font-bold">
                         Game Chat
                       </h2>
 
-                      <p className="mt-1 text-sm text-slate-400">
+                      <p className="mt-1 text-sm text-[color:var(--muted)]">
                         Talk with your opponent.
                       </p>
                     </div>
 
-                    <span className="flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1 text-xs text-emerald-400">
+                    <span className="flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1 text-xs text-[color:var(--good)]">
                       <span className="h-2 w-2 rounded-full bg-emerald-400" />
                       Live
                     </span>
@@ -960,11 +1055,11 @@ function MultiplayerMatchContent() {
                       <div className="flex h-full flex-col items-center justify-center text-center">
                         <span className="text-4xl">💬</span>
 
-                        <p className="mt-3 text-sm font-medium text-slate-300">
+                        <p className="mt-3 text-sm font-medium text-[color:var(--muted)]">
                           No messages yet
                         </p>
 
-                        <p className="mt-1 text-xs text-slate-500">
+                        <p className="mt-1 text-xs text-[color:var(--muted)]">
                           Start the conversation with your opponent.
                         </p>
                       </div>
@@ -983,7 +1078,7 @@ function MultiplayerMatchContent() {
                               className={`max-w-[85%] rounded-2xl px-3 py-2 ${
                                 mine
                                   ? "rounded-br-sm bg-blue-600 text-white"
-                                  : "rounded-bl-sm bg-slate-800 text-slate-200"
+                                  : "rounded-bl-sm bg-[var(--panel-2)] text-[color:var(--ink)]"
                               }`}
                             >
                               <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider opacity-70">
@@ -1009,7 +1104,7 @@ function MultiplayerMatchContent() {
                   {game.status === "active" ? (
                     <form
                       onSubmit={sendChatMessage}
-                      className="border-t border-slate-700 p-3"
+                      className="border-t border-[color:var(--line)] p-3"
                     >
                       <div className="flex items-center gap-2">
                         <input
@@ -1021,7 +1116,7 @@ function MultiplayerMatchContent() {
                           placeholder="Type a message..."
                           maxLength={1000}
                           disabled={chatBusy}
-                          className="min-w-0 flex-1 rounded-xl border border-slate-700 bg-slate-800 px-3 py-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-blue-500 disabled:opacity-50"
+                          className="min-w-0 flex-1 rounded-xl border border-[color:var(--line)] bg-[var(--panel-2)] px-3 py-3 text-sm text-white outline-none placeholder:text-[color:var(--muted)] focus:border-blue-500 disabled:opacity-50"
                         />
 
                         <button
@@ -1033,19 +1128,19 @@ function MultiplayerMatchContent() {
                         </button>
                       </div>
 
-                      <div className="mt-2 flex justify-between text-[10px] text-slate-500">
+                      <div className="mt-2 flex justify-between text-[10px] text-[color:var(--muted)]">
                         <span>Messages are visible to both players.</span>
                         <span>{chatInput.length}/1000</span>
                       </div>
 
                       {chatError && (
-                        <p className="mt-2 text-xs text-red-400">
+                        <p className="mt-2 text-xs text-[color:var(--bad)]">
                           {chatError}
                         </p>
                       )}
                     </form>
                   ) : (
-                    <div className="border-t border-slate-700 p-4 text-center text-xs text-slate-500">
+                    <div className="border-t border-[color:var(--line)] p-4 text-center text-xs text-[color:var(--muted)]">
                       This game has ended. Chat is now read-only.
                     </div>
                   )}
@@ -1063,7 +1158,7 @@ export default function MultiplayerMatchPage() {
   return (
     <Suspense
       fallback={
-        <main className="flex min-h-screen items-center justify-center bg-[#080d18] text-white">
+        <main className="flex min-h-screen items-center justify-center bg-[var(--bg)] text-white">
           Loading your match...
         </main>
       }

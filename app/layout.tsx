@@ -1,11 +1,22 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import Splash from "@/components/Splash";
 
 export const metadata: Metadata = {
   title: "CHESS PLAY | Think. Move. Conquer.",
   description:
-    "Play chess online, challenge intelligent opponents, compete in tournaments and climb the global leaderboard.",
+    "Play chess online, solve puzzles, climb the levels and beat the clock. Challenge friends, play the engine, and track every rating point.",
   applicationName: "CHESS PLAY",
+  icons: {
+    icon: "/brand/chessplay-mark.png",
+    apple: "/brand/chessplay-mark.png",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#070a14",
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({
@@ -15,7 +26,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <Splash />
+        {children}
+      </body>
     </html>
   );
 }

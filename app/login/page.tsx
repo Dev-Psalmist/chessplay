@@ -59,7 +59,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-[#080d18] px-4 text-white">
+    <main className="min-h-screen flex items-center justify-center bg-[var(--bg)] px-4 text-white">
       <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#111a2b] p-8 shadow-2xl">
 
         <div className="mb-8 text-center">
@@ -67,7 +67,7 @@ export default function LoginPage() {
             ♟ Chess Play
           </h1>
 
-          <p className="mt-3 text-gray-400">
+          <p className="mt-3 text-[color:var(--muted)]">
             {isSignup
               ? "Create your player account"
               : "Welcome back, champion."}
@@ -88,7 +88,7 @@ export default function LoginPage() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Choose a username"
-                className="w-full rounded-lg border border-white/10 bg-[#080d18] p-3 outline-none focus:border-blue-500"
+                className="w-full rounded-lg border border-white/10 bg-[var(--bg)] p-3 outline-none focus:border-blue-500"
               />
             </div>
           )}
@@ -104,7 +104,7 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="player@example.com"
-              className="w-full rounded-lg border border-white/10 bg-[#080d18] p-3 outline-none focus:border-blue-500"
+              className="w-full rounded-lg border border-white/10 bg-[var(--bg)] p-3 outline-none focus:border-blue-500"
             />
           </div>
 
@@ -120,12 +120,12 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
-              className="w-full rounded-lg border border-white/10 bg-[#080d18] p-3 outline-none focus:border-blue-500"
+              className="w-full rounded-lg border border-white/10 bg-[var(--bg)] p-3 outline-none focus:border-blue-500"
             />
           </div>
 
           {message && (
-            <p className="rounded-lg bg-blue-500/10 p-3 text-sm text-blue-300">
+            <p className="rounded-lg bg-blue-500/10 p-3 text-sm text-[color:var(--accent-2)]">
               {message}
             </p>
           )}
@@ -144,7 +144,7 @@ export default function LoginPage() {
 
         </form>
 
-        <div className="mt-6 text-center text-sm text-gray-400">
+        <div className="mt-6 text-center text-sm text-[color:var(--muted)]">
           {isSignup
             ? "Already have an account?"
             : "New to Chess Play?"}
@@ -154,7 +154,7 @@ export default function LoginPage() {
               setIsSignup(!isSignup);
               setMessage("");
             }}
-            className="ml-2 font-semibold text-blue-400 hover:text-blue-300"
+            className="ml-2 font-semibold text-[color:var(--accent-2)] hover:text-[color:var(--accent-2)]"
           >
             {isSignup ? "Login" : "Register"}
           </button>

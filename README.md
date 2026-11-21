@@ -1,36 +1,50 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CHESS PLAY
 
-## Getting Started
+Play chess, solve puzzles, climb levels and beat the clock. Next.js 16 (App Router),
+Supabase for auth + multiplayer state, chess.js for rules and Stockfish 19 (WASM) for
+the computer opponent.
 
-First, run the development server:
+## What's in the app
+
+- **Play** (`/play`): engine games with a browser-side Stockfish worker, five difficulty
+  levels, undo, board flip and a live clock.
+- **Puzzles** (`/puzzles`): 18 mate-in-one puzzles across six levels. Clearing every
+  puzzle in a level unlocks the next one. Progress is saved in the browser.
+- **Multiplayer** (`/multiplayer`): invite-code games with lobby, draw offers, resign,
+  rematch and in-game chat.
+- **Profile** (`/profile`): record and stats for signed-in players.
+
+## Clocks
+
+Local games run on 10, 15 or 25 minutes, or 3 days per move. The clock is authoritative
+on the client for engine games and ticks down for the side on the move; a dead clock ends
+the game.
+
+Online clocks need the additive migration in `supabase/migrations/0003_game_clocks.sql`.
+Run it in the Supabase SQL editor, then call `set_game_clock(game_id, '10' | '15' | '25' | '3d')`
+when a game is created.
+
+## Sound
+
+Move, capture, castle, promotion, check, illegal and game-over sounds live in
+`public/sounds`. They are synthesised, so there are no licensing strings attached, and
+the mute toggle is in the top navigation.
+
+## Design
+
+One palette everywhere: midnight navy `#070a14`, panels `#0e1424`, periwinkle accent
+`#7c8bf2`, ice `#b9c2ff`, warm wood gold `#e6c288`. Board squares are `#c6cfea` /
+`#48537c`. Tokens are defined once in `app/globals.css`.
+
+## Local development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Requires `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` in `.env.local`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deploy
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Linked to Vercel: pushing to `main` builds and deploys automatically.
