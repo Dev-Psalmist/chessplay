@@ -211,6 +211,13 @@ $$;
 
 -- The API validates chess legality with chess.js. This RPC makes persistence atomic
 -- and rejects stale clients, wrong players, duplicate plies and out-of-order moves.
+-- The legacy function has parameter defaults. PostgreSQL does not allow
+-- CREATE OR REPLACE to remove or change those defaults, so replace this
+-- exact function signature explicitly. The surrounding migration is transactional.
+drop function if exists public.commit_chess_move(
+  uuid, uuid, text, text, text, text, text, text, text, integer, text, uuid
+);
+
 create or replace function public.commit_chess_move(
   p_game_id uuid,
   p_player_id uuid,
