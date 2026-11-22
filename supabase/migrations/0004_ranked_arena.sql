@@ -222,7 +222,7 @@ returns boolean
 language plpgsql
 security definer
 set search_path = ''
-as $
+as $body$
 declare
   v_game public.games%rowtype;
   v_turn text;
@@ -279,7 +279,7 @@ begin
 
   return true;
 end;
-$;
+$body$;
 
 revoke all on function public.claim_game_timeout(uuid, uuid) from public, anon, authenticated;
 grant execute on function public.claim_game_timeout(uuid, uuid) to service_role;
