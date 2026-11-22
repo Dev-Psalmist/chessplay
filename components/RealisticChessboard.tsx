@@ -41,8 +41,8 @@ export default function RealisticChessboard({ options }: Props) {
   }, [options.position]);
 
   const selectSquare = useCallback(
-    (squareName: string) => {
-      if (!options.allowDragging || typeof options.position !== "string") {
+    (squareName: string | null) => {
+      if (!squareName || !options.allowDragging || typeof options.position !== "string") {
         setSelectedSquare(null);
         setLegalTargets([]);
         return;
