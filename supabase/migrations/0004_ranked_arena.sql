@@ -83,6 +83,8 @@ declare
   v_black_id uuid;
 begin
   if p_player_id is null
+     or p_rating_type is null
+     or p_time_control is null
      or p_rating_type not in ('bullet', 'blitz', 'rapid')
      or p_time_control not in ('1', '3', '5', '10', '15') then
     raise exception 'Invalid ranked matchmaking request.';
@@ -93,6 +95,11 @@ begin
      or (p_rating_type = 'rapid' and p_time_control not in ('10', '15')) then
     raise exception 'The selected time control does not match this rating pool.';
   end if;
+
+  -- Remove abandoned searches so an offline player is never paired later.
+  delete from public.matchmaking_queue q
+  where q.status = 'waiting'
+    and q.queued_at < now() - interval '90 seconds';
 
   select * into v_existing
   from public.matchmaking_queue q
@@ -206,6 +213,77 @@ revoke all on function public.cancel_ranked_match(uuid) from public, anon, authe
 grant execute on function public.cancel_ranked_match(uuid) to service_role;
 
 -- Settle each ranked result once. K=32 gives new players room to move quickly.
+-- The server checks the authoritative stored clock before accepting a late move.
+create or replace function public.claim_game_timeout(
+  p_game_id uuid,
+  p_player_id uuid
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = ''
+as $
+declare
+  v_game public.games%rowtype;
+  v_turn text;
+  v_remaining integer;
+  v_elapsed integer;
+  v_winner uuid;
+  v_result text;
+begin
+  select * into v_game
+  from public.games g
+  where g.id = p_game_id
+  for update;
+
+  if not found or v_game.status <> 'active' then
+    return false;
+  end if;
+
+  if p_player_id not in (v_game.white_player_id, v_game.black_player_id) then
+    raise exception 'You are not a player in this game.';
+  end if;
+
+  if v_game.white_time_ms is null or v_game.black_time_ms is null then
+    return false;
+  end if;
+
+  v_turn := split_part(v_game.current_fen, ' ', 2);
+  v_elapsed := greatest(
+    0,
+    floor(extract(epoch from (now() - coalesce(v_game.last_move_at, v_game.started_at, now()))) * 1000)::integer
+  );
+
+  if v_turn = 'w' then
+    v_remaining := v_game.white_time_ms;
+    v_winner := v_game.black_player_id;
+    v_result := 'black_win';
+  else
+    v_remaining := v_game.black_time_ms;
+    v_winner := v_game.white_player_id;
+    v_result := 'white_win';
+  end if;
+
+  if v_remaining > v_elapsed then
+    return false;
+  end if;
+
+  update public.games
+  set status = 'completed',
+      result = v_result,
+      winner_id = v_winner,
+      completed_at = now(),
+      white_time_ms = case when v_turn = 'w' then 0 else white_time_ms end,
+      black_time_ms = case when v_turn = 'b' then 0 else black_time_ms end
+  where id = p_game_id;
+
+  return true;
+end;
+$;
+
+revoke all on function public.claim_game_timeout(uuid, uuid) from public, anon, authenticated;
+grant execute on function public.claim_game_timeout(uuid, uuid) to service_role;
+
 create or replace function public.apply_ranked_game_result(p_game_id uuid)
 returns void
 language plpgsql
