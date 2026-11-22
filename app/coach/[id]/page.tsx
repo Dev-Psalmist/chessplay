@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Chess } from "chess.js";
 import AppNav from "@/components/AppNav";
@@ -38,7 +38,7 @@ function classifyMove(color: "w" | "b", change: number) {
   return { label: "Blunder" as const, explanation: "This move caused a major evaluation swing. Check for hanging pieces, checks and immediate tactical threats before choosing a move." };
 }
 
-export default function ChessCoachPage() {
+function ChessCoachContent() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const gameId = params.id;
@@ -227,5 +227,14 @@ export default function ChessCoachPage() {
         <p className="mt-5 text-center text-xs leading-5 text-[color:var(--muted)]">Engine evaluations are estimates, not guarantees. Use the feedback as a learning guide and review critical positions on the board.</p>
       </div>
     </main>
+  );
+}
+
+
+export default function ChessCoachPage() {
+  return (
+    <Suspense fallback={<main className="flex min-h-screen items-center justify-center bg-[var(--bg)] text-white">Preparing your ChessPlay Coach...</main>}>
+      <ChessCoachContent />
+    </Suspense>
   );
 }
