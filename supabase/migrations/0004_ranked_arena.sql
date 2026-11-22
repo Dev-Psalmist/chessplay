@@ -81,7 +81,6 @@ declare
   v_base_ms integer;
   v_white_id uuid;
   v_black_id uuid;
-  v_range integer;
 begin
   if p_player_id is null
      or p_rating_type not in ('bullet', 'blitz', 'rapid')
@@ -120,7 +119,7 @@ begin
     raise exception 'Player profile not found.';
   end if;
 
-  insert into public.matchmaking_queue (
+  insert into public.matchmaking_queue as current_queue (
     player_id, rating_type, time_control, rating_snapshot, status, matched_game_id, queued_at
   )
   values (p_player_id, p_rating_type, p_time_control, v_rating, 'waiting', null, now())
@@ -131,13 +130,11 @@ begin
         status = 'waiting',
         matched_game_id = null,
         queued_at = case
-          when public.matchmaking_queue.rating_type = excluded.rating_type
-           and public.matchmaking_queue.time_control = excluded.time_control
+          when current_queue.rating_type = excluded.rating_type
+           and current_queue.time_control = excluded.time_control
           then public.matchmaking_queue.queued_at
           else now()
         end;
-
-  v_range := 100;
 
   select * into v_opponent
   from public.matchmaking_queue q
@@ -149,8 +146,8 @@ begin
       100 + least(500, greatest(0, floor(extract(epoch from (now() - q.queued_at)) / 10)::integer * 50))
     )
   order by abs(q.rating_snapshot - v_rating), q.queued_at
-  for update skip locked
-  limit 1;
+  limit 1
+  for update skip locked;
 
   if not found then
     return query select null::uuid, false;
