@@ -129,6 +129,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Enforce the server clock before accepting a move. A browser cannot
+    // submit a move after its side's authoritative time has expired.
+    const { data: timedOut, error: timeoutError } = await supabase.rpc(
+      "claim_game_timeout",
+      { p_game_id: gameId, p_player_id: user.id }
+    );
+
+    if (timeoutError) {
+      console.error("Could not verify game clock:", timeoutError.message);
+      return errorResponse("Unable to verify the game clock.", 500);
+    }
+
+    if (timedOut) {
+      return errorResponse("Your time has expired. The game is over.", 409);
+    }
+
     // Rebuild from the stored PGN first. This avoids reading every move
     // from game_moves on every turn, keeping the common move path to fewer
     // database round trips. Older games without PGN use the move ledger.
