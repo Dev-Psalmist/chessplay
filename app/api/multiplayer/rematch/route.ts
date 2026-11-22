@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getAuthenticatedUser } from "@/lib/server-auth";
 import { createClient } from "@supabase/supabase-js";
 
 
@@ -40,7 +41,7 @@ export async function POST(request: NextRequest) {
     const {
       data: { user },
       error: authError,
-    } = await admin.auth.getUser(token);
+    } = await getAuthenticatedUser(token);
 
     if (authError || !user) {
       return NextResponse.json(
