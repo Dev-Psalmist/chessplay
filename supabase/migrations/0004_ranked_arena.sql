@@ -126,6 +126,15 @@ begin
     raise exception 'Player profile not found.';
   end if;
 
+  if exists (
+    select 1
+    from public.games g
+    where g.status = 'active'
+      and p_player_id in (g.white_player_id, g.black_player_id)
+  ) then
+    raise exception 'Finish your current game before entering Ranked Arena.';
+  end if;
+
   insert into public.matchmaking_queue as current_queue (
     player_id, rating_type, time_control, rating_snapshot, status, matched_game_id, queued_at
   )
