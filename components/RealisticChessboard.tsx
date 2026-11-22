@@ -12,23 +12,20 @@ type Props = {
 };
 
 /**
- * Keeps react-chessboard's native drag/drop and animations, while replacing
- * its flat SVG pieces with transparent renders of real Three.js geometry.
+ * Native react-chessboard interactions with custom Three.js-rendered
+ * Staunton pieces, presented inside the heirloom walnut board frame.
  */
 export default function RealisticChessboard({ options }: Props) {
   const [sprites, setSprites] = useState<PieceSpriteMap>({});
 
   useEffect(() => {
     let mounted = true;
-
     try {
       const rendered = renderChessPieceSprites();
       if (mounted) setSprites(rendered);
     } catch (error) {
-      // WebGL can be unavailable on older browsers; preserve the default set.
       console.warn("3D chess pieces could not be rendered in this browser.", error);
     }
-
     return () => {
       mounted = false;
     };
@@ -36,7 +33,6 @@ export default function RealisticChessboard({ options }: Props) {
 
   const pieces = useMemo(() => {
     if (Object.keys(sprites).length !== 12) return undefined;
-
     const renderer = (code: string) => () => (
       <img
         src={sprites[code]}
@@ -45,22 +41,17 @@ export default function RealisticChessboard({ options }: Props) {
         className="chess-piece-3d"
       />
     );
-
     return {
-      wP: renderer("wP"),
-      wN: renderer("wN"),
-      wB: renderer("wB"),
-      wR: renderer("wR"),
-      wQ: renderer("wQ"),
-      wK: renderer("wK"),
-      bP: renderer("bP"),
-      bN: renderer("bN"),
-      bB: renderer("bB"),
-      bR: renderer("bR"),
-      bQ: renderer("bQ"),
-      bK: renderer("bK"),
+      wP: renderer("wP"), wN: renderer("wN"), wB: renderer("wB"),
+      wR: renderer("wR"), wQ: renderer("wQ"), wK: renderer("wK"),
+      bP: renderer("bP"), bN: renderer("bN"), bB: renderer("bB"),
+      bR: renderer("bR"), bQ: renderer("bQ"), bK: renderer("bK"),
     };
   }, [sprites]);
 
-  return <Chessboard options={{ ...options, ...(pieces ? { pieces } : {}) }} />;
+  return (
+    <div className="board-shell">
+      <Chessboard options={{ ...options, ...(pieces ? { pieces } : {}) }} />
+    </div>
+  );
 }
