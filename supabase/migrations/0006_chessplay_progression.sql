@@ -205,4 +205,11 @@ create trigger award_rating_milestone_after_profile_update
   after update of bullet_rating, blitz_rating, rapid_rating on public.profiles
   for each row execute function public.award_rating_milestone();
 
+-- Backfill milestones for players who already meet the conditions.
+insert into public.player_achievements (player_id, achievement_code)
+select p.id, 'rating_1200'
+from public.profiles p
+where greatest(p.bullet_rating, p.blitz_rating, p.rapid_rating) >= 1200
+on conflict (player_id, achievement_code) do nothing;
+
 commit;
