@@ -189,7 +189,7 @@ returns trigger
 language plpgsql
 security definer
 set search_path = ''
-as $
+as $$
 begin
   if greatest(new.bullet_rating, new.blitz_rating, new.rapid_rating) >= 1200 then
     insert into public.player_achievements (player_id, achievement_code)
@@ -198,7 +198,7 @@ begin
   end if;
   return new;
 end;
-$;
+$$;
 
 drop trigger if exists award_rating_milestone_after_profile_update on public.profiles;
 create trigger award_rating_milestone_after_profile_update
