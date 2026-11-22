@@ -139,7 +139,7 @@ begin
         queued_at = case
           when current_queue.rating_type = excluded.rating_type
            and current_queue.time_control = excluded.time_control
-          then public.matchmaking_queue.queued_at
+          then current_queue.queued_at
           else now()
         end;
 
