@@ -36,6 +36,8 @@ type Game = {
   result: string | null;
   winner_id: string | null;
   draw_offer_by: string | null;
+  is_ranked?: boolean;
+  rating_type?: "bullet" | "blitz" | "rapid" | null;
 };
 
 type Move = {
@@ -80,6 +82,7 @@ function MultiplayerMatchContent() {
   const [game, setGame] = useState<Game | null>(null);
   const [clock, setClock] = useState<{ white: number; black: number; daily: boolean } | null>(null);
   const clockTickRef = useRef<number | null>(null);
+  const timeoutRequestRef = useRef(false);
   const seenFenRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -194,7 +197,7 @@ function MultiplayerMatchContent() {
     const { data: gameData, error: gameError } = await supabase
       .from("games")
       .select(
-        "id, white_player_id, black_player_id, status, current_fen, pgn, result, winner_id, draw_offer_by"
+        "id, white_player_id, black_player_id, status, current_fen, pgn, result, winner_id, draw_offer_by, is_ranked, rating_type"
       )
       .eq("id", gameId)
       .maybeSingle();
@@ -218,14 +221,21 @@ function MultiplayerMatchContent() {
 
     const { data: clockData, error: clockError } = await supabase
       .from("games")
-      .select("time_control, white_time_ms, black_time_ms")
+      .select("time_control, white_time_ms, black_time_ms, last_move_at")
       .eq("id", gameId)
       .maybeSingle();
 
     if (!clockError && clockData && typeof clockData.white_time_ms === "number") {
+      const turn = String(gameData.current_fen).split(" ")[1];
+      const lastMoveAt = clockData.last_move_at
+        ? new Date(clockData.last_move_at).getTime()
+        : Date.now();
+      const elapsed = gameData.status === "active"
+        ? Math.max(0, Date.now() - lastMoveAt)
+        : 0;
       setClock({
-        white: clockData.white_time_ms,
-        black: clockData.black_time_ms ?? clockData.white_time_ms,
+        white: Math.max(0, clockData.white_time_ms - (turn === "w" ? elapsed : 0)),
+        black: Math.max(0, (clockData.black_time_ms ?? clockData.white_time_ms) - (turn === "b" ? elapsed : 0)),
         daily: String(clockData.time_control ?? "").endsWith("d"),
       });
     }
@@ -305,6 +315,40 @@ function MultiplayerMatchContent() {
 
     return () => window.clearInterval(interval);
   }, [clock, game]);
+
+  // Claim a flag fall through the server so both players receive the same result.
+  useEffect(() => {
+    if (!clock || !game || game.status !== "active" || timeoutRequestRef.current) return;
+
+    const sideToMove = game.current_fen.split(" ")[1];
+    const remaining = sideToMove === "w" ? clock.white : clock.black;
+    if (remaining > 0) return;
+
+    timeoutRequestRef.current = true;
+
+    void (async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) throw new Error("Your session has expired. Please log in again.");
+
+        const response = await fetch("/api/multiplayer/timeout", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ gameId }),
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Unable to verify the clock.");
+        await refreshGame();
+      } catch (timeoutError) {
+        setError(timeoutError instanceof Error ? timeoutError.message : "Unable to verify the clock.");
+      } finally {
+        timeoutRequestRef.current = false;
+      }
+    })();
+  }, [clock, game, gameId, refreshGame]);
 
   // Listen for game moves, game updates, rematch updates and chat messages.
   useEffect(() => {
