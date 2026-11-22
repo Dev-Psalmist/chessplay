@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getAuthenticatedUser } from "@/lib/server-auth";
 import { createClient } from "@supabase/supabase-js";
 import { Chess } from "chess.js";
 
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest) {
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser(accessToken);
+    } = await getAuthenticatedUser(accessToken);
 
     if (authError || !user) {
       console.error("Authentication error:", authError);
