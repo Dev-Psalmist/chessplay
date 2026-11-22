@@ -61,6 +61,12 @@ export default function HomePage() {
               </Link>
 
               <Link
+                href="/leaderboard"
+                className="rounded-lg border border-white/10 px-4 py-2 text-sm hover:bg-white/10"
+              >
+                Leaderboard
+              </Link>
+              <Link
                 href="/profile"
                 className="rounded-lg border border-white/10 px-4 py-2 text-sm hover:bg-white/10"
               >

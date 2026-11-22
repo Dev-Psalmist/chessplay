@@ -1014,6 +1014,22 @@ function MultiplayerMatchContent() {
                 </section>
               )}
 
+              {/* GAME REVIEW */}
+              {completed && (
+                <section className="mt-6 rounded-2xl border border-[color:var(--gold)]/25 bg-[color:var(--gold)]/5 p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="grid h-11 w-11 place-items-center rounded-xl bg-[color:var(--gold)]/10 text-[color:var(--gold)]">✦</div>
+                    <div>
+                      <h2 className="text-xl font-bold">Learn from this game</h2>
+                      <p className="text-sm text-[color:var(--muted)]">Get move-by-move feedback from the Stockfish-powered ChessPlay Coach.</p>
+                    </div>
+                  </div>
+                  <button onClick={() => router.push(`/coach/${gameId}`)} className="mt-5 w-full rounded-lg bg-[color:var(--gold)] px-5 py-3 font-bold text-black hover:brightness-105">
+                    Analyze with AI Coach
+                  </button>
+                </section>
+              )}
+
               {/* REMATCH SECTION */}
               {completed && (
                 <section className="mt-6 rounded-2xl border border-blue-500/30 bg-[var(--panel)] p-5">

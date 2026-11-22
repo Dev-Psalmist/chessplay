@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import AppNav from "@/components/AppNav";
+import { Award, Sparkles } from "lucide-react";
 
 type PlayerProfile = {
   username: string;
@@ -14,10 +16,13 @@ type PlayerProfile = {
   losses: number;
   draws: number;
   reward_points: number;
+  xp: number;
   bullet_rating: number;
   blitz_rating: number;
   rapid_rating: number;
 };
+
+type EarnedAchievement = { achievement_code: string; earned_at: string; achievements: { name: string; description: string; icon: string } | null };
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -25,6 +30,7 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<PlayerProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
+  const [achievements, setAchievements] = useState<EarnedAchievement[]>([]);
 
   useEffect(() => {
     async function loadProfile() {
@@ -40,7 +46,7 @@ export default function ProfilePage() {
         const { data, error } = await supabase
           .from("profiles")
           .select(
-            "username, display_name, avatar_url, rating, games_played, wins, losses, draws, reward_points, bullet_rating, blitz_rating, rapid_rating"
+            "username, display_name, avatar_url, rating, games_played, wins, losses, draws, reward_points, xp, bullet_rating, blitz_rating, rapid_rating"
           )
           .eq("id", user.id)
           .single();
@@ -48,6 +54,13 @@ export default function ProfilePage() {
         if (error) throw error;
 
         setProfile(data);
+
+        const { data: earned } = await supabase
+          .from("player_achievements")
+          .select("achievement_code, earned_at, achievements(name, description, icon)")
+          .eq("player_id", user.id)
+          .order("earned_at", { ascending: false });
+        setAchievements((earned ?? []) as unknown as EarnedAchievement[]);
       } catch (error) {
         setMessage(
           error instanceof Error
@@ -91,11 +104,15 @@ export default function ProfilePage() {
     );
   }
 
+  const playerLevel = Math.floor(profile.xp / 500) + 1;
+  const xpIntoLevel = profile.xp % 500;
+
   const stats = [
     { label: "Games Played", value: profile.games_played },
     { label: "Victories", value: profile.wins },
     { label: "Defeats", value: profile.losses },
     { label: "Draws", value: profile.draws },
+    { label: "ChessPlay XP", value: profile.xp },
     { label: "Reward Points", value: profile.reward_points },
   ];
 
@@ -103,6 +120,7 @@ export default function ProfilePage() {
     <main className="min-h-screen bg-[var(--bg)] px-5 py-12 text-white">
 
       <div className="mx-auto max-w-4xl">
+        <AppNav />
 
         <header className="mb-10 flex items-center justify-between">
           <h1 className="text-3xl font-bold">♟ Chess Play</h1>

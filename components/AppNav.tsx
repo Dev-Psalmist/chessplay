@@ -11,6 +11,8 @@ const LINKS = [
   { href: "/play", label: "Play" },
   { href: "/puzzles", label: "Puzzles" },
   { href: "/multiplayer", label: "Multiplayer" },
+  { href: "/ranked", label: "Ranked" },
+  { href: "/leaderboard", label: "Leaderboard" },
   { href: "/profile", label: "Profile" },
 ];
 
