@@ -182,4 +182,27 @@ create trigger award_chessplay_progress_after_completion
   after update of status on public.games
   for each row execute function public.award_chessplay_progress();
 
+-- Ranked ratings are settled by a separate game trigger. Watch profile ratings
+-- too, so the 1,200 milestone is granted immediately after an Elo update.
+create or replace function public.award_rating_milestone()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $
+begin
+  if greatest(new.bullet_rating, new.blitz_rating, new.rapid_rating) >= 1200 then
+    insert into public.player_achievements (player_id, achievement_code)
+    values (new.id, 'rating_1200')
+    on conflict (player_id, achievement_code) do nothing;
+  end if;
+  return new;
+end;
+$;
+
+drop trigger if exists award_rating_milestone_after_profile_update on public.profiles;
+create trigger award_rating_milestone_after_profile_update
+  after update of bullet_rating, blitz_rating, rapid_rating on public.profiles
+  for each row execute function public.award_rating_milestone();
+
 commit;
