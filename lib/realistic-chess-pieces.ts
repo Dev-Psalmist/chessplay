@@ -244,6 +244,10 @@ function renderPiece(renderer: THREE.WebGLRenderer, type: PieceType, color: "w" 
   const material = color === "w" ? ivory : ebony;
   const detail = type === "B" || type === "R" ? inset : gold;
   const model = buildPiece(type, material, detail);
+
+  // Traditional, confident Staunton proportions: broader bodies, shorter
+  // profiles and a larger footprint so every piece reads clearly at board size.
+  model.scale.set(1.28, 0.82, 1.28);
   model.rotation.y = -0.24;
   scene.add(model);
 
@@ -258,9 +262,9 @@ function renderPiece(renderer: THREE.WebGLRenderer, type: PieceType, color: "w" 
   rim.position.set(-2, 3.5, 2);
   scene.add(rim);
 
-  const camera = new THREE.OrthographicCamera(-0.72, 0.72, 0.72, -0.72, 0.1, 20);
+  const camera = new THREE.OrthographicCamera(-0.67, 0.67, 0.67, -0.67, 0.1, 20);
   camera.position.set(2.8, 3.0, 4.8);
-  camera.lookAt(0, 0.56, 0);
+  camera.lookAt(0, 0.47, 0);
   renderer.setClearColor(0x000000, 0);
   renderer.render(scene, camera);
   const image = renderer.domElement.toDataURL("image/png");
