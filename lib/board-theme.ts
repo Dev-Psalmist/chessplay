@@ -8,12 +8,9 @@ export const BOARD_LIGHT = "#ead9b8";
 export const BOARD_DARK = "#76513b";
 
 export const boardFrameStyle: CSSProperties = {
-  borderRadius: 14,
+  borderRadius: 8,
   overflow: "hidden",
-  background: "linear-gradient(145deg, #9a704c 0%, #4a2d20 24%, #24160f 68%, #6d4a31 100%)",
-  border: "7px solid #5b3927",
-  boxShadow:
-    "0 34px 72px -28px rgba(0,0,0,.95), inset 0 2px 0 rgba(255,235,198,.24), inset 0 -4px 10px rgba(0,0,0,.55), 0 0 0 1px rgba(224,187,128,.35)",
+  boxShadow: "inset 0 0 0 1px rgba(255,239,210,.16)",
 };
 
 export const lightSquareStyle: CSSProperties = {
