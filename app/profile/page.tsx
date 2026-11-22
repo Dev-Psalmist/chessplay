@@ -14,6 +14,9 @@ type PlayerProfile = {
   losses: number;
   draws: number;
   reward_points: number;
+  bullet_rating: number;
+  blitz_rating: number;
+  rapid_rating: number;
 };
 
 export default function ProfilePage() {
@@ -37,7 +40,7 @@ export default function ProfilePage() {
         const { data, error } = await supabase
           .from("profiles")
           .select(
-            "username, display_name, avatar_url, rating, games_played, wins, losses, draws, reward_points"
+            "username, display_name, avatar_url, rating, games_played, wins, losses, draws, reward_points, bullet_rating, blitz_rating, rapid_rating"
           )
           .eq("id", user.id)
           .single();
@@ -148,6 +151,25 @@ export default function ProfilePage() {
               <p className="mt-1 text-xs text-[color:var(--muted)]">
                 ELO
               </p>
+            </div>
+
+            <div className="mt-6 w-full max-w-2xl">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--muted)]">
+                Ranked Arena Ratings
+              </p>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                {[
+                  { label: "Bullet", value: profile.bullet_rating },
+                  { label: "Blitz", value: profile.blitz_rating },
+                  { label: "Rapid", value: profile.rapid_rating },
+                ].map((item) => (
+                  <div key={item.label} className="rounded-xl border border-[color:var(--gold)]/20 bg-[color:var(--gold)]/5 p-4">
+                    <p className="text-sm text-[color:var(--muted)]">{item.label}</p>
+                    <p className="mt-1 text-3xl font-bold text-[color:var(--gold)]">{item.value}</p>
+                    <p className="text-[10px] uppercase tracking-wider text-[color:var(--muted)]">ELO</p>
+                  </div>
+                ))}
+              </div>
             </div>
 
           </div>

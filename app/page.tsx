@@ -47,6 +47,18 @@ export default function HomePage() {
               >
                 Puzzles
               </Link>
+              <Link
+                href="/ranked"
+                className="rounded-lg border border-[color:var(--gold)]/40 bg-[color:var(--gold)]/10 px-4 py-2 text-sm text-[color:var(--gold)] hover:bg-[color:var(--gold)]/20"
+              >
+                Ranked Arena
+              </Link>
+              <Link
+                href="/multiplayer"
+                className="rounded-lg border border-white/10 px-4 py-2 text-sm hover:bg-white/10"
+              >
+                Play a Friend
+              </Link>
 
               <Link
                 href="/profile"
