@@ -816,6 +816,11 @@ function MultiplayerMatchContent() {
             <p className="mt-1 text-sm text-[color:var(--muted)]">
               Game ID: {game.id.slice(0, 8)}
             </p>
+            {game.is_ranked && (
+              <p className="mt-2 inline-flex rounded-full border border-[color:var(--gold)]/30 bg-[color:var(--gold)]/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-[color:var(--gold)]">
+                Ranked {game.rating_type ?? "Arena"}
+              </p>
+            )}
           </div>
 
           <button
