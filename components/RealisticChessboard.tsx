@@ -40,10 +40,8 @@ export default function RealisticChessboard({ options }: Props) {
     setLegalTargets([]);
   }, [options.position]);
 
-  const handleSquareClick = useCallback(
-    (args: Parameters<NonNullable<BoardOptions["onSquareClick"]>>[0]) => {
-      options.onSquareClick?.(args);
-
+  const selectSquare = useCallback(
+    (squareName: string) => {
       if (!options.allowDragging || typeof options.position !== "string") {
         setSelectedSquare(null);
         setLegalTargets([]);
@@ -52,7 +50,7 @@ export default function RealisticChessboard({ options }: Props) {
 
       try {
         const chess = new Chess(options.position);
-        const square = args.square as Square;
+        const square = squareName as Square;
         const clickedPiece = chess.get(square);
 
         if (clickedPiece && clickedPiece.color === chess.turn()) {
@@ -75,7 +73,23 @@ export default function RealisticChessboard({ options }: Props) {
         setLegalTargets([]);
       }
     },
-    [legalTargets, options, selectedSquare]
+    [legalTargets, options.allowDragging, options.position, selectedSquare]
+  );
+
+  const handleSquareClick = useCallback(
+    (args: Parameters<NonNullable<BoardOptions["onSquareClick"]>>[0]) => {
+      options.onSquareClick?.(args);
+      selectSquare(args.square);
+    },
+    [options.onSquareClick, selectSquare]
+  );
+
+  const handlePieceClick = useCallback(
+    (args: Parameters<NonNullable<BoardOptions["onPieceClick"]>>[0]) => {
+      options.onPieceClick?.(args);
+      selectSquare(args.square);
+    },
+    [options.onPieceClick, selectSquare]
   );
 
   const squareStyles = useMemo(() => {
@@ -133,6 +147,7 @@ export default function RealisticChessboard({ options }: Props) {
           ...options,
           squareStyles,
           onSquareClick: handleSquareClick,
+          onPieceClick: handlePieceClick,
           ...(pieces ? { pieces } : {}),
         }}
       />
