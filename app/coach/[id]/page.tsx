@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Chess } from "chess.js";
 import AppNav from "@/components/AppNav";
 import { supabase } from "@/lib/supabase";
-import { ArrowLeft, BrainCircuit, LoaderCircle, RefreshCw, Sparkles } from "lucide-react";
+import { ArrowLeft, BrainCircuit, LoaderCircle, Sparkles } from "lucide-react";
 
 type MoveReview = {
   ply: number;
@@ -43,7 +43,6 @@ export default function ChessCoachPage() {
   const router = useRouter();
   const gameId = params.id;
   const [game, setGame] = useState<{ pgn: string | null; result: string | null; white_player_id: string; black_player_id: string | null } | null>(null);
-  const [userId, setUserId] = useState("");
   const [reviews, setReviews] = useState<MoveReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
@@ -55,7 +54,6 @@ export default function ChessCoachPage() {
     async function loadGame() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.replace("/login"); return; }
-      setUserId(user.id);
       const { data, error: queryError } = await supabase
         .from("games")
         .select("pgn, result, white_player_id, black_player_id, status")
