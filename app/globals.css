@@ -521,3 +521,38 @@ button {
     animation: none;
   }
 }
+
+
+/* ---------- heirloom walnut board + polished 3D chessmen ---------- */
+.board-shell {
+  padding: 12px;
+  border: 1px solid rgba(226, 188, 126, 0.42);
+  background:
+    linear-gradient(135deg, rgba(255, 229, 186, 0.18), transparent 22%),
+    linear-gradient(145deg, #805638, #29180f 58%, #6a472d);
+  box-shadow:
+    0 38px 90px -34px rgba(0, 0, 0, 0.96),
+    inset 0 1px 0 rgba(255, 236, 202, 0.24),
+    inset 0 -5px 12px rgba(0, 0, 0, 0.58);
+}
+
+.board-shell::before {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border: 1px solid rgba(230, 194, 136, 0.24);
+  border-radius: 13px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.board-shell::after {
+  background: linear-gradient(135deg, rgba(255, 244, 218, 0.14), transparent 34%, rgba(0, 0, 0, 0.12));
+  opacity: 0.55;
+}
+
+.chess-piece-3d {
+  filter:
+    drop-shadow(0 5px 3px rgba(23, 12, 6, 0.38))
+    drop-shadow(0 1px 1px rgba(255, 244, 220, 0.12));
+}
