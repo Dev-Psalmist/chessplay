@@ -104,6 +104,9 @@ export default function ProfilePage() {
     );
   }
 
+  const playerLevel = Math.floor(profile.xp / 500) + 1;
+  const xpIntoLevel = profile.xp % 500;
+
   const stats = [
     { label: "Games Played", value: profile.games_played },
     { label: "Victories", value: profile.wins },
